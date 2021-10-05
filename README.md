@@ -1,7 +1,11 @@
 # DatastreamDSWS2R
-Functions and a R5 class that allows data to be downloaded and uploaded to the Refinitiv Datastream database via the DSWS server.  Refinitiv Datastream is a rich database of financial information and details are available at <https://developers.refinitiv.com/en>.  You need to have a Datastream subscription and a username/password to use this package.
+Functions and a R5 class that allows data to be downloaded and uploaded to the Refinitiv Datastream database via the DSWS server.  Refinitiv Datastream is a rich database of financial information.  You need to have a Datastream subscription and a username/password to use this package.
 
-The package can be installed using:
+The package is installed using:
+
+    install.packages("DatastreamDSWS2R")
+    
+The development version of the package can be installed using:
 
     require(devtools)
     install_github(“CharlesCara/DatastreamDSWS2R”)
@@ -18,6 +22,15 @@ For backwards compatibility we have retained the ability to put credentials into
     options(Datastream.Username = "YOURUSERNAME")
     options(Datastream.Password = "YOURPASSWORD")
 
+A connection with the 'DSWS' API server is created by initialising the dsws object:
+
+     mydsws <- dsws$new()
+
+The username and password can also be passed in when creating the connection, but the environment variable approach is favoured.
+
+     mydsws <- dsws$new(username = "YOURUSERNAME", password = "YOURPASSWORD")
+     
+     
 ## Static Requests
 Once set up a typical request would be for a snapshot or *static* request:
 
@@ -60,7 +73,7 @@ We can also handle composite datatypes that return multiple values, for instance
                            requestDate = Sys.Date())
 
 
-Another notable dataitem that returns multiple values is 'DS.USERSTATS' which returns information on the user's consumption of Datastream data.
+Another notable dataitem that returns multiple values is [DS.USERSTATS](https://developers.refinitiv.com/en) which returns information on the user's consumption of Datastream data.
 
     mydsws <- dsws$new()
     mydsws$snapshotRequest(instrument = "STATS",
@@ -87,7 +100,7 @@ Timeseries request (expressions are also supported) using the timeSeriesRequest 
 
 
 ## Other information
-The dsws interface will split large requests down into chunks small enough for the DSWS interface to process.  However, the maximum chunk size varies in the DSWS documentation and is either 2000 or 50.  Different users have different limits.  The default chunkLimit is 2000, but it can be to 50:
+The dsws interface will split large requests down into chunks small enough for the DSWS interface to process.  However, the maximum chunk size varies in the DSWS documentation and is either 2000 or 50, depending on whether they have Enterprise or Individual subscriptions.  The default chunkLimit is 2000, but it can be set to 50 after initialisation. 
 
     mydsws <- dsws$new()
     mydsws$chunkLimit <- 50L
@@ -101,7 +114,9 @@ Alternatively this can be set as an option by adding this line to your .RProfile
 The access token that is used to access DSWS can be provided via a callback function. This allows
 the callback function to cache the token between sessions and so reducing the number of calls on the DSWS server.
 
-When the token expires then this function will be called again and needs to provide a refreshed token.  The callback function is used like this: 
+When the token expires then this function will be called again and needs to provide a refreshed token.  
+
+The callback function is used in 
 
     # Stub of function for returning token from user's cache
     myTokenFunc <- function(){
@@ -111,38 +126,49 @@ When the token expires then this function will be called again and needs to prov
 
     mydsws <- dsws$new(getTokenFunction = myTokenFunc)
 
+## Username and Password - ChildId
+The correct username is the 'childId' comprising 4 characters and 3 digits.  If you get a http 403 response 'Forbidden', then this might be because the Eikon username and password was used. 
 
+## Affiliation and Warranty
+This package is not provided by Refinitiv or an affiliate. I have written this package to help my work at Absolute Strategy 
+Research.  We are happy to make it available for others to use, but we offer or imply no warranty. 
 
-## Update 1.7.5
+### Update 1.8.1
+Change URL to https
+
+### Update 1.7.10
+Better handling of missing dates.
+
+### Update 1.7.5
 Improvement in handling of Token Callback function.
 
-## Update 1.7.4
+### Update 1.7.4
 Fix for Issues #37 - charToDate error raised when list request had mixture of dates and character "NA""
 
-## Update 1.7.2
+### Update 1.7.2
 Fix for Issues #20 - requesting token after http 403 response
 
-## Update 1.7.1
+### Update 1.7.1
 Fix for Issue #28 - callback function for getting token 
 
 
-## Update 1.6.6
+### Update 1.6.6
 Fix for Issues #26 and #27
 
-## Update 1.6.3
+### Update 1.6.3
 Handle lower case RIC codes.
 
-## Update 1.6.2
+### Update 1.6.2
 Improve documentation and return Instrument column in snapshot requests.
 
-## Update 1.6.1
+### Update 1.6.1
 Added handling of composite datatypes which return multiple values.
 
-## Update 1.5.1
+### Update 1.5.1
 With this update we have switched from using the RCurl/rjson to using the httr/jsonlite packages for communicating with the Datastream server. 
 
 
-## CRAN
+### CRAN
 Thank you to @mbannert for his work making the package ready to be released on CRAN. 
 
 

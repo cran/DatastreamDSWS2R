@@ -168,7 +168,7 @@ dsws$methods(initialize = function(dsws.serverURL = "",
   if(dsws.serverURL == ""){
     # 07/4/2016 - due to issue with Datastream's load balancers, using a different URL.  This will
     # be changed back when the issue is resolved.
-    .self$serverURL <- "http://product.datastream.com/DSWSClient/V1/DSService.svc/rest/"
+    .self$serverURL <- "https://product.datastream.com/DSWSClient/V1/DSService.svc/rest/"
   } else {
     .self$serverURL <- dsws.serverURL
   }
@@ -398,7 +398,7 @@ dsws$methods(.makeRequest = function(bundle = FALSE){
 
   if(!is.null(.self$jsonResponseLoadFile)){
     if(file.exists(.self$jsonResponseLoadFile)) {
-      .self$dataResponse <- rjson::fromJSON(file = .self$jsonResponseLoadFile)
+      .self$dataResponse <- rjson::fromJSON(file =  .self$jsonResponseLoadFile)
       return(TRUE)
     } else {
       stop("File specified by dsws$jsonResponseLoadFile does not exist")
@@ -791,6 +791,8 @@ dsws$methods(.basicRequest = function(instrument,
 
   # We have to have at least one instrument
   numCodes <- length(instrument)
+  numDatatypes <- length(datatype)
+
   if(numCodes == 0){
     stop("instruments is empty and has length zero")
   }
@@ -809,28 +811,28 @@ dsws$methods(.basicRequest = function(instrument,
   if(format == "Snapshot"){
     # Set the holder for the results here
     # Process the response into a dataframe, one row per instrument, with a column for each datatype
-    .self$myValues <- data.frame(matrix(NA, nrow = length(instrument), ncol = length(datatype) + 1))
+    .self$myValues <- data.frame(matrix(NA, nrow = length(instrument), ncol = numDatatypes + 1))
   } else if(format == "ByInstrument"){
-    xtsValues <- NULL
+    xtsValues <- as.list(rep(NA, length.out = numDatatypes))
   }
 
 
   # Holder for the type (ie Date, string) for each of the datatypes
-  .self$myTypes <- rep(NA, length(datatype))
+  .self$myTypes <- rep(NA, length.out = numDatatypes)
 
 
   doChunk <- FALSE
   if(datatype[1] != ""){
     # If we are not using a expression, we will just apply the rule that
     # number of instruments * number of datatypes has to be less tha the chunk limit
-    doChunk <- (length(instrument) * length(datatype) >= .self$chunkLimit)
+    doChunk <- (numCodes * numDatatypes >= .self$chunkLimit)
   } else {
     # There appears to be a maximum character limit for a request (or response)
     # We will need to chunk the request if we are using an expression and when we expand the expression
     # it is over this limit.
     expandedInstrument <- paste0(.self$.expandExpression(instrument, expression), collapse=",")
     if((nchar(expandedInstrument) >= .self$requestStringLimit) |
-       (length(instrument) * length(datatype) >= .self$chunkLimit)){
+       (numCodes * numDatatypes >= .self$chunkLimit)){
       doChunk <- TRUE
     }
   }
@@ -869,7 +871,7 @@ dsws$methods(.basicRequest = function(instrument,
   # Work out the number of chunks and the size of each request
 
   if(datatype[1] != ""){
-    numInstrChunk <- floor(.self$chunkLimit / length(datatype))
+    numInstrChunk <- floor(.self$chunkLimit / numDatatypes)
     numChunks <- ceiling(numCodes / numInstrChunk )
 
   } else {
@@ -939,18 +941,19 @@ dsws$methods(.basicRequest = function(instrument,
 
       if(length(datatype) == 1){
         # If we have only one datatype then merging is simple
-        if(is.null(xtsValues)){
+        if(i == 1 || is.null(xtsValues)){
           xtsValues <- ret
         } else {
           xtsValues <- cbindRobust(xtsValues, ret)
         }
       } else {
         # If multiple datatypes then the xts for each datatype has to be merged individually
-        for(i in 1: length(datatype)){
-          if(is.null(xtsValues[[i]])){
-            xtsValues[[i]] <- ret[[i]]
+        for(j in 1: numDatatypes){
+          if(i == 1 || is.null(xtsValues[[j]]) || is.na(xtsValues[[j]])){
+            # First run
+            xtsValues[[j]] <- ret[[j]]
           } else {
-            xtsValues[[i]] <- cbindRobust(xtsValues[[i]], ret[[i]])
+            xtsValues[[j]] <- cbindRobust(xtsValues[[j]], ret[[j]])
           }
         }
       }
@@ -971,7 +974,7 @@ dsws$methods(.basicRequest = function(instrument,
 
   if(format[1] == "ByInstrument" | format == "ByDatatype"){
     return(xtsValues)
-  } else if(format == "Snapshot"){
+  } else if(format == "Snapshot" | format == "SnapshotList"){
     return(.self$myValues)
   }
 
@@ -1334,6 +1337,18 @@ dsws$methods(.processSnapshot = function(format, myNumDatatype, isChunked, chunk
       myType <- sapply(.self$dataResponse$DataResponse$DataTypeValues[[iDatatype]]$SymbolValues,
                        FUN = .getType,
                        simplify = TRUE)
+
+      # If column contains multiple datatypes and at least one of these is of the character type (i.e. type 6),
+      # then check if all the character elements are "NA" and, if so, prevent column conversion to character type:
+      if(any(myType==6)&length(unique(myType))>1){
+
+        charValues <- sapply(.self$dataResponse$DataResponse$DataTypeValues[[iDatatype]]$SymbolValues,
+                             FUN=function(x) x$Value,
+                             simplify=TRUE)[myType==6]
+
+        if(all(charValues=='NA')) myType <- myType[myType!=6]
+      }
+
       .self$myTypes[iDatatype] <- round(median(as.numeric(myType), na.rm = TRUE))
 
       # On the first loop, we need to check what the type of data is, and if a Date
