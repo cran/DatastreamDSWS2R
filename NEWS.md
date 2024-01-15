@@ -1,3 +1,11 @@
+# DatastreamDSWS2R 1.9.7
+
+## Update 1.9.5
+Handle upload of daily series that begin on a weekend better
+
+## Update 1.9.3
+Hold the number of DSWS requests and chunks after each data request
+
 ## Update 1.8.1
 Change server URLs to https.  Fix issue # 39
 
@@ -31,14 +39,6 @@ Added handling of composite datatypes which return multiple values.
 
 ## Update 1.5.1
 With this update we have switched from using the RCurl/rjson to using the httr/jsonlite packages for communicating with the Datastream server. 
-
-## Datastream DWE - now decommissioned by Refinitiv
-In addition, this package has been built to be largely backwards compatible with 
-the Datastream2R package that used the depreciated DWE 
-server from Datastream.  You just need to replace 
-    require(Datastream2R) 
-with 
-    require(DatastreamDSWS2R)
 
 ## CRAN
 Thank you to @mbannert for his work making the package ready to be released on CRAN. 
