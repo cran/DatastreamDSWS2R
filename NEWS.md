@@ -1,4 +1,9 @@
-# DatastreamDSWS2R 1.9.7
+# DatastreamDSWS2R 1.9.10
+
+# DatastreamDSWS2R 1.9.9
+
+## Update 1.9.8
+Change branding from Refinitiv to LSEG
 
 ## Update 1.9.5
 Handle upload of daily series that begin on a weekend better
@@ -40,7 +45,5 @@ Added handling of composite datatypes which return multiple values.
 ## Update 1.5.1
 With this update we have switched from using the RCurl/rjson to using the httr/jsonlite packages for communicating with the Datastream server. 
 
-## CRAN
-Thank you to @mbannert for his work making the package ready to be released on CRAN. 
 
 

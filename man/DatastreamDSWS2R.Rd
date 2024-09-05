@@ -2,9 +2,14 @@
 % Please edit documentation in R/DatastreamDSWS2R.R
 \docType{package}
 \name{DatastreamDSWS2R}
+\alias{DatastreamDSWS2R-package}
 \alias{DatastreamDSWS2R}
 \title{DatastreamDSWS2R}
 \description{
-A package to manage access to the Refinitiv Datastream
+A package to manage access to the LSEG Datastream
  DSWS webservice
+}
+\author{
+\strong{Maintainer}: Charles Cara \email{charles.cara@absolute-strategy.com}
+
 }

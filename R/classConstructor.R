@@ -2,10 +2,10 @@
 #' @name classconstructor
 #' @title dsws
 #'
-#' @description An R5/RC object for accessing the Refinitiv Datastream
+#' @description An R5/RC object for accessing the LSEG Datastream
 #'   DSWS service.
 #'
-#' @details Creates an R5/RC4 object for accessing the Refinitiv
+#' @details Creates an R5/RC4 object for accessing the LSEG
 #'   Datastream DSWS service
 #'
 #'
@@ -146,8 +146,8 @@ dsws$methods(initialize = function(dsws.serverURL = "",
     This allows the password to be stored in .Renviron or .RProfile rather
   than in the source code.
 
-  There is a difference in the Refinitiv's documentation about the chunk limit and different accounts have
-  different limits.  Some users are limited to 50 items while others are limited to 2000L.  The chunk limit
+  There different accounts have different limits according to their licence.  Most users are limited to 50 items while
+  enterprise users have a limit of 2000L.  The chunk limit
   can be controlled by setting the chunkLimit parameter of the dsws object.  If     \\code{options()$Datastream.ChunkLimit} is
   set then the value is taken from there.
 
@@ -301,9 +301,6 @@ dsws$methods(.requestToken = function() {
 
     # We are going to handle timeouts by
     # waiting incrementally up to 16 sec and repeating the request
-    maxLoop <- 4L
-    waitTimeBase <- 2
-    nLoop <- 0
     .self$errorlist <- NULL
 
     myTokenResponse <- httr::RETRY(
@@ -408,9 +405,6 @@ dsws$methods(.makeRequest = function(bundle = FALSE) {
     message("--------------------------------------------------")
   }
 
-  maxLoop <- 4L
-  waitTimeBase <- 2
-  nLoop <- 0
   .self$errorlist <- NULL
   .self$numRequests <- .self$numRequests + 1
   myDataResponse <- httr::RETRY(
